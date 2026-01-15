@@ -10,12 +10,12 @@ class Vector3:
         return f'Vector3({self.x}, {self.y}, {self.z})'
     
     def __add__(self, other):
-        if not isinstance(Vector3, other):
+        if not isinstance(other, Vector3):
             raise TypeError('Можно складывать только векторы размерностью 3')
         return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
 
     def __sub__(self, other):
-        if not isinstance(Vector3, other):
+        if not isinstance(other, Vector3):
             raise TypeError('Можно вычитать только векторы размерностью 3')
         return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
         
@@ -28,7 +28,7 @@ class Vector3:
     def __truediv__(self, scalar):
         if scalar == 0:
             raise ZeroDivisionError('На ноль делить нельзя')
-        return(self.x / scalar, self.y / scalar, self.z / scalar)
+        return Vector3(self.x / scalar, self.y / scalar, self.z / scalar)
 
     def length(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2)
@@ -40,12 +40,12 @@ class Vector3:
         return Vector3(self.x / l, self.y / l, self.z / l)
 
     def scalarmul(self, other):
-        if not isinstance(Vector3, other):
+        if not isinstance(other, Vector3):
             raise TypeError('Можно умножать только скаляры размерностью 3')
         return(self.x * other.x + self.y * other.y + self.z * other.z)
 
     def vectormul(self, other): 
-        if not isinstance(Vector3, other):
+        if not isinstance(other, Vector3):
             raise TypeError('Можно умножать только векторы размерностью 3')
         return Vector3(self.y * other.z - self.z * other.y, 
                        self.z * other.x - self.x * other.z,

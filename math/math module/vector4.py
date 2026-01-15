@@ -11,12 +11,12 @@ class Vector4:
         return f'Vector4({self.x}, {self.y}, {self.z}, {self.w})'
     
     def __add__(self, other):
-        if not isinstance(Vector4, other):
+        if not isinstance(other, Vector4):
             raise TypeError('Можно складывать только векторы размерностью 4')
         return Vector4(self.x + other.x, self.y + other.y, self.z + other.z, self.w + other.w)
 
     def __sub__(self, other):
-        if not isinstance(Vector4, other):
+        if not isinstance(other, Vector4):
             raise TypeError('Можно вычитать только векторы размерностью 4')
         return Vector4(self.x - other.x, self.y - other.y, self.z - other.z, self.w - other.w)
 
@@ -29,7 +29,7 @@ class Vector4:
     def __truediv__(self, scalar):
         if scalar == 0:
             raise ZeroDivisionError('На ноль делить нельзя')
-        return(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
+        return Vector4(self.x / scalar, self.y / scalar, self.z / scalar, self.w / scalar)
 
     def length(self):
         return math.sqrt(self.x ** 2 + self.y ** 2 + self.z ** 2 + self.w ** 2)
@@ -37,11 +37,11 @@ class Vector4:
     def normalize(self):
         l = self.length()
         if l == 0: 
-            return Vector4(0, 0, 0)
+            return Vector4(0, 0, 0, 0)
         return Vector4(self.x / l, self.y / l, self.z / l, self.w / l)
 
     def scalarmul(self, other):
-        if not isinstance(Vector4, other):
+        if not isinstance(other, Vector4):
             raise TypeError('Можно умножать только скаляры размерностью 4')
         return(self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w)
 

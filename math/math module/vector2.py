@@ -9,12 +9,12 @@ class Vector2:
         return f'Vector2({self.x}, {self.y})'
     
     def __add__(self, other):
-        if not isinstance(Vector2, other):
+        if not isinstance(other, Vector2):
             raise TypeError('Можно складывать только векторы размерностью 2')
         return Vector2(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other):
-        if not isinstance(Vector2, other):
+        if not isinstance(other, Vector2):
             raise TypeError('Можно вычитать только векторы размерностью 2')
         return Vector2(self.x - other.x, self.y - other.y)
     
@@ -27,7 +27,7 @@ class Vector2:
     def __truediv__(self, scalar):
         if scalar == 0:
             raise ZeroDivisionError('На ноль делить нельзя')
-        else: return(self.x / scalar, self.y / scalar)
+        return Vector2(self.x / scalar, self.y / scalar)
 
     def length(self):
         return math.sqrt(self.x ** 2 + self.y ** 2)
@@ -39,7 +39,7 @@ class Vector2:
         return Vector2(self.x / l, self.y / l)
 
     def scalarmul(self, other):
-        if not isinstance(Vector2, other):
+        if not isinstance(other, Vector2):
             raise TypeError('Можно умножать только скаляры размерностью 2')
         return(self.x * other.x + self.y * other.y)
 
