@@ -11,11 +11,12 @@ class Vector2:
     def __add__(self, other):
         if not isinstance(Vector2, other):
             raise TypeError('Можно складывать только векторы размерностью 2')
-        else: Vector2(self.x + other.x, self.y + other.y)
+        return Vector2(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other):
         if not isinstance(Vector2, other):
             raise TypeError('Можно вычитать только векторы размерностью 2')
+        return Vector2(self.x - other.x, self.y - other.y)
     
     def __mul__(self, scalar):
         return Vector2(self.x * scalar, self.y * scalar)
@@ -35,12 +36,12 @@ class Vector2:
         l = self.length()
         if l == 0: 
             return Vector2(0, 0)
-        else: return Vector2(self.x / l, self.y / l)
+        return Vector2(self.x / l, self.y / l)
 
     def scalarmul(self, other):
         if not isinstance(Vector2, other):
             raise TypeError('Можно умножать только скаляры размерностью 2')
-        else: return(self.x * other.x + self.y * other.y)
+        return(self.x * other.x + self.y * other.y)
 
     
 

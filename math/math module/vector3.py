@@ -17,7 +17,8 @@ class Vector3:
     def __sub__(self, other):
         if not isinstance(Vector3, other):
             raise TypeError('Можно вычитать только векторы размерностью 3')
-    
+        return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
+        
     def __mul__(self, scalar):
         return Vector3(self.x * scalar, self.y * scalar, self.z * scalar)
     
