@@ -29,7 +29,7 @@ class Matrix3x3:
     
     def __add__(self, other):
         if not isinstance(other, Matrix3x3):
-            raise ValueError('Можно складывать только матрицы размерностью 3')
+            raise TypeError('Можно складывать только матрицы размерностью 3')
         result = Matrix3x3(zero = True)
         for i in range(3):
             for j in range(3):
@@ -38,7 +38,7 @@ class Matrix3x3:
     
     def __sub__(self, other):
         if not isinstance(other, Matrix3x3):
-            raise ValueError('Можно вычитать только матрицы размерностью 3')
+            raise TypeError('Можно вычитать только матрицы размерностью 3')
         result = Matrix3x3(zero = True)
         for i in range(3):
             for j in range(3):
