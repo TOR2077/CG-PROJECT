@@ -1,3 +1,5 @@
+import math
+
 from .vector3 import Vector3
 from .vector4 import Vector4
 
@@ -92,3 +94,48 @@ class Matrix4x4:
             for j in range(4):
                 result.data[i][j] = self.data[j][i]
         return result
+    
+    @staticmethod
+    def translation(tx, ty, tz):
+        return Matrix4x4(data = 
+                        [[1.0, 0.0, 0.0, float(tx)],
+                         [0.0, 1.0, 0.0, float(ty)],
+                         [0.0, 0.0, 1.0, float(tz)],
+                         [0.0, 0.0, 0.0, 1.0]])
+    
+    @staticmethod 
+    def rotation_x(angle):
+        s = math.sin(angle)
+        c = math.cos(angle)
+        return Matrix4x4(data = 
+                        [[1.0, 0.0, 0.0, 0.0],
+                         [0.0, c, -s, 0.0],
+                         [0.0, s, c, 0.0],
+                         [0.0, 0.0, 0.0, 1.0]])
+    
+    @staticmethod
+    def rotation_y(angle):
+        s = math.sin(angle)
+        c = math.cos(angle)
+        return Matrix4x4(data = 
+                        [[c, 0.0, s, 0.0],
+                         [0.0, 1.0, 0.0, 0.0],
+                         [-s, 0.0, c, 0.0],
+                         [0.0, 0.0, 0.0, 1.0]])
+    @staticmethod
+    def rotation_z(angle):
+        s = math.sin(angle)
+        c = math.cos(angle)
+        return Matrix4x4(data = 
+                        [[c, -s, 0.0, 0.0],
+                         [s, c, 0.0, 0.0],
+                         [0.0, 0.0, 1.0, 0.0],
+                         [0.0, 0.0, 0.0, 1.0]])
+    
+    @staticmethod 
+    def scale(sx, sy, sz):  
+        return Matrix4x4(data = 
+                        [[float(sx), 0.0, 0.0, 0.0],
+                         [0.0, float(sy), 0.0, 0.0],
+                         [0.0, 0.0, float(sz), 0.0],
+                         [0.0, 0.0, 0.0, 1.0]])
