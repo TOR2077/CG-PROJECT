@@ -53,6 +53,11 @@ class AffineTransform:
             new_v = matrix * v
             transform_v.append(new_v)
         return transform_v
+    
+    def get_transform_vertices(self, origignal_vertices, use_transform = True):
+        if use_transform == True:
+            return self.transform_vertices(origignal_vertices)
+        else: return list(origignal_vertices)
 
     def reset(self):
         self.translation = Vector3(0.0, 0.0, 0.0)
