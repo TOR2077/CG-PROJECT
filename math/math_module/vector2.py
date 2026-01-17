@@ -10,7 +10,7 @@ class Vector2:
     
     def __add__(self, other):
         if not isinstance(other, Vector2):
-            raise TypeError('Можно складывать только векторы размерностью 2 ')
+            raise TypeError('Можно складывать только векторы размерностью ')
         return Vector2(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other):
