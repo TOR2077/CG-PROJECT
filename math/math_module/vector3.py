@@ -1,5 +1,7 @@
 import math 
 
+e = 1e-9
+
 class Vector3:
     def __init__(self, x = 0.0, y = 0.0, z = 0.0):
         self.x = float(x)
@@ -35,7 +37,7 @@ class Vector3:
     
     def normalize(self):
         l = self.length()
-        if l == 0: 
+        if abs(l) < e: 
             return Vector3(0, 0, 0)
         return Vector3(self.x / l, self.y / l, self.z / l)
 
