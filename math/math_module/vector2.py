@@ -1,5 +1,7 @@
 import math 
 
+e = 1e-9
+
 class Vector2:
     def __init__(self, x = 0.0, y = 0.0):
         self.x = float(x)
@@ -10,7 +12,7 @@ class Vector2:
     
     def __add__(self, other):
         if not isinstance(other, Vector2):
-            raise TypeError('Можно складывать только векторы размерностью 2 ')
+            raise TypeError('Можно складывать только векторы размерностью ')
         return Vector2(self.x + other.x, self.y + other.y)
 
     def __sub__(self, other):
@@ -34,7 +36,7 @@ class Vector2:
     
     def normalize(self):
         l = self.length()
-        if l == 0: 
+        if abs(l) < e: 
             return Vector2(0, 0)
         return Vector2(self.x / l, self.y / l)
 
