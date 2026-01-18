@@ -566,9 +566,6 @@ class MainWindow(QMainWindow):
             if RENDERING_AVAILABLE:
                 self.model_viewer.update_render()
             else:
-                if RENDERING_AVAILABLE:
-                self.model_viewer.update_render()
-            else:
                 self.model_viewer.update_display()
         else:
             # Сбрасываем значения

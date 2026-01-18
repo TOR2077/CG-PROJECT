@@ -12,7 +12,7 @@
 
 import sys
 import os
-import math
+import math as math_std
 from PIL import Image
 
 # Добавляем путь к модулю math
@@ -115,8 +115,8 @@ class Texture:
         # Обрабатываем режим оборачивания
         if wrap_mode == 'repeat':
             # Повторяем текстуру (tile)
-            u = u - math.floor(u)
-            v = v - math.floor(v)
+            u = u - math_std.floor(u)
+            v = v - math_std.floor(v)
         elif wrap_mode == 'clamp':
             # Ограничиваем координаты
             u = max(0.0, min(1.0, u))
@@ -152,8 +152,8 @@ class Texture:
         
         # Обрабатываем режим оборачивания
         if wrap_mode == 'repeat':
-            u = u - math.floor(u)
-            v = v - math.floor(v)
+            u = u - math_std.floor(u)
+            v = v - math_std.floor(v)
         elif wrap_mode == 'clamp':
             u = max(0.0, min(1.0, u))
             v = max(0.0, min(1.0, v))

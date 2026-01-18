@@ -16,7 +16,7 @@
 
 import sys
 import os
-import math
+import math as math_std
 
 # Добавляем путь к модулю math
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -135,7 +135,7 @@ def phong_lighting(normal, view_dir, light_dir, light_color,
     rdotv = max(0.0, rdotv)
     
     # Степень блеска
-    specular_factor = math.pow(rdotv, shininess)
+    specular_factor = math_std.pow(rdotv, shininess)
     
     specular = (
         specular_factor * specular_color[0] * light_color_vec.x,

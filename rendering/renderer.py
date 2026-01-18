@@ -16,7 +16,7 @@
 
 import sys
 import os
-import math
+import math as math_std
 
 # Добавляем путь к модулю math
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

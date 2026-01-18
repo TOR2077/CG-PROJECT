@@ -17,12 +17,15 @@
 
 import sys
 import os
-import math
+# ВАЖНО: Импортируем стандартный math ПЕРЕД импортом нашего модуля math
+import math as math_std  # Импортируем стандартный math под другим именем
 
 # Добавляем путь к модулю math
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
+# Импортируем наш модуль math (это перезапишет имя math, но у нас уже есть math_std)
+import math  # Это наш модуль math из проекта
 from math.math_module.vector3 import Vector3
 from math.math_module.matrix4x4 import Matrix4x4
 
@@ -59,7 +62,7 @@ class Camera:
         self.up = up if up is not None else Vector3(0, 1, 0)
         
         # Параметры проекции
-        self.fov = math.radians(45.0)  # Угол обзора (field of view) в радианах
+        self.fov = math_std.radians(45.0)  # Угол обзора (field of view) в радианах
         self.aspect_ratio = 1.0  # Соотношение сторон (ширина/высота)
         self.near_plane = 0.1  # Ближняя плоскость отсечения
         self.far_plane = 1000.0  # Дальняя плоскость отсечения
@@ -121,7 +124,7 @@ class Camera:
             которые дальше, выглядят меньше.
         """
         # Вычисляем параметры перспективной проекции
-        f = 1.0 / math.tan(self.fov / 2.0)  # Фокусное расстояние
+        f = 1.0 / math_std.tan(self.fov / 2.0)  # Фокусное расстояние
         
         # Создаем матрицу перспективной проекции
         projection_data = [
@@ -166,15 +169,15 @@ class Camera:
         direction = self.position - self.target
         
         # Вращаем вокруг оси Y (горизонтальное вращение)
-        cos_x = math.cos(angle_x)
-        sin_x = math.sin(angle_x)
+        cos_x = math_std.cos(angle_x)
+        sin_x = math_std.sin(angle_x)
         new_x = direction.x * cos_x - direction.z * sin_x
         new_z = direction.x * sin_x + direction.z * cos_x
         direction = Vector3(new_x, direction.y, new_z)
         
         # Вращаем вокруг оси X (вертикальное вращение)
-        cos_y = math.cos(angle_y)
-        sin_y = math.sin(angle_y)
+        cos_y = math_std.cos(angle_y)
+        sin_y = math_std.sin(angle_y)
         new_y = direction.y * cos_y - direction.z * sin_y
         new_z = direction.y * sin_y + direction.z * cos_y
         direction = Vector3(direction.x, new_y, new_z)
