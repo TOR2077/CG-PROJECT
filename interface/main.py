@@ -7,9 +7,15 @@
 import sys
 import os
 
+# ВАЖНО: Добавляем путь к корню проекта ПЕРЕД любыми импортами
+# Это нужно, чтобы Python нашел наш модуль math, а не стандартный
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from PyQt5.QtWidgets import QApplication
 
-# Добавляем пути к модулям
+# Добавляем путь к модулям interface
 sys.path.insert(0, os.path.dirname(__file__))
 
 from ui.main_window import MainWindow
