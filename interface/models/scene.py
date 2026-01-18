@@ -16,6 +16,13 @@ sys.path.insert(0, project_root)
 from math.math_module.vector3 import Vector3
 from .model import Model
 
+# Импортируем Camera (с обработкой ошибки, если модуль еще не создан)
+try:
+    from rendering.camera import Camera
+except ImportError:
+    # Если модуль не найден, создаем заглушку
+    Camera = None
+
 
 class Scene:
     """
@@ -33,6 +40,21 @@ class Scene:
         """Инициализация сцены"""
         self.models = []  # Список всех моделей
         self.selected_model_index = -1  # Индекс выбранной модели (-1 = нет выбора)
+        
+        # Камеры
+        self.cameras = []  # Список всех камер
+        self.selected_camera_index = -1  # Индекс выбранной камеры (-1 = нет выбора)
+        
+        # Создаем камеру по умолчанию, если модуль Camera доступен
+        if Camera is not None:
+            default_camera = Camera(
+                position=Vector3(0, 0, 5),
+                target=Vector3(0, 0, 0),
+                up=Vector3(0, 1, 0),
+                name="Default Camera"
+            )
+            self.cameras.append(default_camera)
+            self.selected_camera_index = 0
     
     def add_model(self, model):
         """
@@ -222,8 +244,111 @@ class Scene:
         
         return ((min_x, min_y, min_z), (max_x, max_y, max_z))
     
+    def add_camera(self, camera):
+        """
+        Добавляет камеру в сцену
+        
+        Args:
+            camera: Объект Camera
+            
+        Returns:
+            int: Индекс добавленной камеры
+        """
+        if Camera is None:
+            raise RuntimeError("Модуль Camera не доступен")
+        if not isinstance(camera, Camera):
+            raise TypeError("Камера должна быть экземпляром класса Camera")
+        
+        self.cameras.append(camera)
+        # Автоматически выбираем новую камеру, если ничего не выбрано
+        if self.selected_camera_index == -1:
+            self.selected_camera_index = len(self.cameras) - 1
+        
+        return len(self.cameras) - 1
+    
+    def remove_camera(self, index):
+        """
+        Удаляет камеру из сцены по индексу
+        
+        Args:
+            index (int): Индекс камеры для удаления
+            
+        Returns:
+            bool: True если камера удалена, False если индекс неверен
+        """
+        if 0 <= index < len(self.cameras):
+            self.cameras.pop(index)
+            
+            # Обновляем индекс выбранной камеры
+            if self.selected_camera_index == index:
+                if len(self.cameras) > 0:
+                    self.selected_camera_index = min(index, len(self.cameras) - 1)
+                else:
+                    self.selected_camera_index = -1
+            elif self.selected_camera_index > index:
+                self.selected_camera_index -= 1
+            
+            return True
+        return False
+    
+    def get_camera(self, index):
+        """
+        Получает камеру по индексу
+        
+        Args:
+            index (int): Индекс камеры
+            
+        Returns:
+            Camera или None: Камера или None если индекс неверен
+        """
+        if 0 <= index < len(self.cameras):
+            return self.cameras[index]
+        return None
+    
+    def get_selected_camera(self):
+        """
+        Получает выбранную камеру
+        
+        Returns:
+            Camera или None: Выбранная камера или None если ничего не выбрано
+        """
+        if 0 <= self.selected_camera_index < len(self.cameras):
+            return self.cameras[self.selected_camera_index]
+        return None
+    
+    def select_camera(self, index):
+        """
+        Выбирает камеру по индексу
+        
+        Args:
+            index (int): Индекс камеры для выбора
+            
+        Returns:
+            bool: True если камера выбрана, False если индекс неверен
+        """
+        if 0 <= index < len(self.cameras):
+            self.selected_camera_index = index
+            return True
+        return False
+    
+    def get_selected_camera_index(self):
+        """Возвращает индекс выбранной камеры"""
+        return self.selected_camera_index
+    
+    def get_camera_count(self):
+        """Возвращает количество камер в сцене"""
+        return len(self.cameras)
+    
+    def get_all_cameras(self):
+        """Возвращает список всех камер"""
+        return list(self.cameras)
+    
+    def get_camera_names(self):
+        """Возвращает список имен всех камер"""
+        return [camera.name for camera in self.cameras]
+    
     def __str__(self):
-        return f"Scene(models={len(self.models)}, selected={self.selected_model_index})"
+        return f"Scene(models={len(self.models)}, cameras={len(self.cameras)}, selected_model={self.selected_model_index}, selected_camera={self.selected_camera_index})"
     
     def __repr__(self):
         return self.__str__()

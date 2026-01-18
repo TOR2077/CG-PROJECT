@@ -17,10 +17,11 @@ from pathlib import Path
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QListWidget, QLabel, QFileDialog, QMessageBox, QGroupBox,
-    QDoubleSpinBox, QSpinBox, QMenuBar, QMenu, QStatusBar, QSplitter
+    QDoubleSpinBox, QSpinBox, QMenuBar, QMenu, QStatusBar, QSplitter,
+    QCheckBox, QColorDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QColor
 
 # Добавляем пути к модулям
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -33,54 +34,30 @@ from models.scene import Scene
 from ui.theme_manager import ThemeManager
 from math.math_module.vector3 import Vector3
 
-
-class ModelViewerWidget(QWidget):
-    """
-    Виджет для отображения 3D модели
-    
-    В реальном приложении здесь был бы OpenGL виджет для рендеринга.
-    Для демонстрации это простой виджет с информацией о модели.
-    """
-    
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.scene = None
-        layout = QVBoxLayout()
-        self.info_label = QLabel("Загрузите модель для просмотра")
-        self.info_label.setAlignment(Qt.AlignCenter)
-        self.info_label.setStyleSheet("font-size: 14px; padding: 20px;")
-        layout.addWidget(self.info_label)
-        self.setLayout(layout)
-    
-    def set_scene(self, scene):
-        """Устанавливает сцену для отображения"""
-        self.scene = scene
-        self.update_display()
-    
-    def update_display(self):
-        """Обновляет отображение информации о модели"""
-        if not self.scene or self.scene.get_model_count() == 0:
-            self.info_label.setText("Загрузите модель для просмотра")
-            return
-        
-        selected_model = self.scene.get_selected_model()
-        if selected_model:
-            info = f"Модель: {selected_model.name}\n"
-            info += f"Вершин: {selected_model.get_vertex_count()}\n"
-            info += f"Граней: {selected_model.get_face_count()}\n"
-            info += f"\nТрансформации:\n"
-            info += f"Перемещение: ({selected_model.transform.translation.x:.2f}, "
-            info += f"{selected_model.transform.translation.y:.2f}, "
-            info += f"{selected_model.transform.translation.z:.2f})\n"
-            info += f"Вращение: ({selected_model.transform.rotation.x:.2f}, "
-            info += f"{selected_model.transform.rotation.y:.2f}, "
-            info += f"{selected_model.transform.rotation.z:.2f})\n"
-            info += f"Масштаб: ({selected_model.transform.scale.x:.2f}, "
-            info += f"{selected_model.transform.scale.y:.2f}, "
-            info += f"{selected_model.transform.scale.z:.2f})"
-            self.info_label.setText(info)
-        else:
-            self.info_label.setText("Выберите модель из списка")
+# Импортируем модули рендеринга
+try:
+    from rendering.render_widget import RenderWidget
+    from rendering.camera import Camera
+    from rendering.texture import Texture
+    from rendering.lighting import Light
+    RENDERING_AVAILABLE = True
+except ImportError:
+    RENDERING_AVAILABLE = False
+    # Заглушка для случая, если модули рендеринга не доступны
+    class RenderWidget(QWidget):
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            layout = QVBoxLayout()
+            label = QLabel("Рендеринг не доступен")
+            label.setAlignment(Qt.AlignCenter)
+            layout.addWidget(label)
+            self.setLayout(layout)
+        def set_scene(self, scene): pass
+        def set_camera(self, camera): pass
+        def set_texture(self, texture): pass
+        def set_light(self, light): pass
+        def get_render_settings(self): return None
+        def update_render(self): pass
 
 
 class MainWindow(QMainWindow):
@@ -98,8 +75,16 @@ class MainWindow(QMainWindow):
         self.obj_reader = ObjReader()
         self.obj_writer = ObjWriter()
         
+        # Текстура (может быть None)
+        self.texture = None
+        
         self.init_ui()
         self.apply_theme()
+        
+        # Устанавливаем начальную камеру для рендерера
+        if RENDERING_AVAILABLE and self.scene.get_camera_count() > 0:
+            self.model_viewer.set_camera(self.scene.get_selected_camera())
+            self.model_viewer.set_scene(self.scene)
     
     def init_ui(self):
         """Инициализация пользовательского интерфейса"""
@@ -142,6 +127,10 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
         self.status_bar.showMessage("Готово")
+        
+        # Обновляем списки камер (если рендеринг доступен)
+        if RENDERING_AVAILABLE:
+            self.update_cameras_list()
     
     def create_left_panel(self):
         """Создает левую панель со списком моделей"""
@@ -186,8 +175,8 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
         panel.setLayout(layout)
         
-        # Виджет просмотра модели
-        self.model_viewer = ModelViewerWidget()
+        # Виджет рендеринга
+        self.model_viewer = RenderWidget()
         self.model_viewer.set_scene(self.scene)
         layout.addWidget(self.model_viewer)
         
@@ -328,6 +317,68 @@ class MainWindow(QMainWindow):
         edit_group.setLayout(edit_layout)
         layout.addWidget(edit_group)
         
+        # Группа режимов отрисовки
+        if RENDERING_AVAILABLE:
+            render_group = QGroupBox("Режимы отрисовки")
+            render_layout = QVBoxLayout()
+            
+            # Чекбокс для полигональной сетки
+            self.wireframe_check = QCheckBox("Рисовать полигональную сетку")
+            self.wireframe_check.toggled.connect(self.on_render_mode_changed)
+            render_layout.addWidget(self.wireframe_check)
+            
+            # Чекбокс для текстуры
+            self.texture_check = QCheckBox("Использовать текстуру")
+            self.texture_check.toggled.connect(self.on_render_mode_changed)
+            render_layout.addWidget(self.texture_check)
+            
+            # Кнопка загрузки текстуры
+            load_texture_btn = QPushButton("Загрузить текстуру...")
+            load_texture_btn.clicked.connect(self.load_texture)
+            render_layout.addWidget(load_texture_btn)
+            
+            # Чекбокс для освещения
+            self.lighting_check = QCheckBox("Использовать освещение")
+            self.lighting_check.toggled.connect(self.on_render_mode_changed)
+            render_layout.addWidget(self.lighting_check)
+            
+            # Выбор базового цвета
+            color_layout = QHBoxLayout()
+            color_layout.addWidget(QLabel("Базовый цвет:"))
+            self.color_btn = QPushButton()
+            self.color_btn.setFixedSize(50, 30)
+            self.color_btn.setStyleSheet("background-color: rgb(200, 200, 200);")
+            self.color_btn.clicked.connect(self.choose_base_color)
+            color_layout.addWidget(self.color_btn)
+            render_layout.addLayout(color_layout)
+            
+            render_group.setLayout(render_layout)
+            layout.addWidget(render_group)
+            
+            # Группа управления камерами
+            camera_group = QGroupBox("Камеры")
+            camera_layout = QVBoxLayout()
+            
+            # Список камер
+            self.cameras_list = QListWidget()
+            self.cameras_list.itemSelectionChanged.connect(self.on_camera_selected)
+            camera_layout.addWidget(self.cameras_list)
+            
+            # Кнопки управления камерами
+            camera_buttons_layout = QHBoxLayout()
+            
+            add_camera_btn = QPushButton("Добавить")
+            add_camera_btn.clicked.connect(self.add_camera)
+            camera_buttons_layout.addWidget(add_camera_btn)
+            
+            remove_camera_btn = QPushButton("Удалить")
+            remove_camera_btn.clicked.connect(self.remove_camera)
+            camera_buttons_layout.addWidget(remove_camera_btn)
+            
+            camera_layout.addLayout(camera_buttons_layout)
+            camera_group.setLayout(camera_layout)
+            layout.addWidget(camera_group)
+        
         layout.addStretch()
         
         return panel
@@ -412,6 +463,10 @@ class MainWindow(QMainWindow):
             self.scene.select_model(index)
             self.on_model_selected()
             
+            # Обновляем рендеринг
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            
             self.status_bar.showMessage(f"Модель '{model_name}' загружена успешно", 3000)
         
         except FileNotFoundError as e:
@@ -464,6 +519,8 @@ class MainWindow(QMainWindow):
             self.scene.remove_model(current_row)
             self.update_models_list()
             self.on_model_selected()
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
             self.status_bar.showMessage("Модель удалена", 2000)
     
     def update_models_list(self):
@@ -506,7 +563,13 @@ class MainWindow(QMainWindow):
             self.delete_face_spin.setMaximum(max_face)
             
             # Обновляем отображение
-            self.model_viewer.update_display()
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            else:
+                if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            else:
+                self.model_viewer.update_display()
         else:
             # Сбрасываем значения
             self.move_x.setValue(0)
@@ -518,7 +581,10 @@ class MainWindow(QMainWindow):
             self.scale_x.setValue(1)
             self.scale_y.setValue(1)
             self.scale_z.setValue(1)
-            self.model_viewer.update_display()
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            else:
+                self.model_viewer.update_display()
     
     def update_translation(self):
         """Обновляет перемещение модели"""
@@ -529,7 +595,10 @@ class MainWindow(QMainWindow):
                 self.move_y.value(),
                 self.move_z.value()
             )
-            self.model_viewer.update_display()
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            else:
+                self.model_viewer.update_display()
     
     def update_rotation(self):
         """Обновляет вращение модели"""
@@ -541,7 +610,10 @@ class MainWindow(QMainWindow):
                 math.radians(self.rotate_y.value()),
                 math.radians(self.rotate_z.value())
             )
-            self.model_viewer.update_display()
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            else:
+                self.model_viewer.update_display()
     
     def update_scale(self):
         """Обновляет масштаб модели"""
@@ -552,7 +624,10 @@ class MainWindow(QMainWindow):
                 self.scale_y.value(),
                 self.scale_z.value()
             )
-            self.model_viewer.update_display()
+            if RENDERING_AVAILABLE:
+                self.model_viewer.update_render()
+            else:
+                self.model_viewer.update_display()
     
     def reset_transform(self):
         """Сбрасывает трансформации модели"""
@@ -611,6 +686,150 @@ class MainWindow(QMainWindow):
                 self.status_bar.showMessage(f"Удален полигон {face_idx}", 2000)
             else:
                 self.show_error("Ошибка", "Не удалось удалить полигон")
+    
+    def on_render_mode_changed(self):
+        """Обработчик изменения режимов отрисовки"""
+        if not RENDERING_AVAILABLE:
+            return
+        
+        settings = self.model_viewer.get_render_settings()
+        if settings:
+            settings.draw_wireframe = self.wireframe_check.isChecked()
+            settings.use_texture = self.texture_check.isChecked()
+            settings.use_lighting = self.lighting_check.isChecked()
+            
+            # Устанавливаем текстуру в рендерер
+            if settings.use_texture and self.texture:
+                self.model_viewer.set_texture(self.texture)
+            else:
+                self.model_viewer.set_texture(None)
+            
+            self.model_viewer.update_render()
+    
+    def load_texture(self):
+        """Загружает текстуру из файла"""
+        if not RENDERING_AVAILABLE:
+            self.show_error("Ошибка", "Рендеринг не доступен")
+            return
+        
+        filepath, _ = QFileDialog.getOpenFileName(
+            self,
+            "Загрузить текстуру",
+            "",
+            "Image Files (*.png *.jpg *.jpeg *.bmp *.tiff);;All Files (*)"
+        )
+        
+        if not filepath:
+            return
+        
+        try:
+            self.texture = Texture(image_path=filepath)
+            self.model_viewer.set_texture(self.texture)
+            self.texture_check.setChecked(True)
+            self.on_render_mode_changed()
+            self.status_bar.showMessage(f"Текстура загружена: {Path(filepath).name}", 3000)
+        except Exception as e:
+            self.show_error("Ошибка загрузки текстуры", str(e))
+    
+    def choose_base_color(self):
+        """Выбирает базовый цвет модели"""
+        if not RENDERING_AVAILABLE:
+            return
+        
+        current_color = QColor(*self.model_viewer.get_render_settings().base_color)
+        color = QColorDialog.getColor(current_color, self, "Выберите базовый цвет")
+        
+        if color.isValid():
+            settings = self.model_viewer.get_render_settings()
+            settings.base_color = (color.red(), color.green(), color.blue())
+            self.color_btn.setStyleSheet(
+                f"background-color: rgb({color.red()}, {color.green()}, {color.blue()});"
+            )
+            self.model_viewer.update_render()
+    
+    def add_camera(self):
+        """Добавляет новую камеру в сцену"""
+        if not RENDERING_AVAILABLE:
+            self.show_error("Ошибка", "Рендеринг не доступен")
+            return
+        
+        # Создаем новую камеру рядом с текущей
+        current_camera = self.scene.get_selected_camera()
+        if current_camera:
+            new_position = current_camera.position + Vector3(2, 0, 0)
+            new_camera = Camera(
+                position=new_position,
+                target=current_camera.target,
+                up=current_camera.up,
+                name=f"Camera {self.scene.get_camera_count() + 1}"
+            )
+        else:
+            new_camera = Camera(
+                position=Vector3(0, 0, 5),
+                target=Vector3(0, 0, 0),
+                up=Vector3(0, 1, 0),
+                name=f"Camera {self.scene.get_camera_count() + 1}"
+            )
+        
+        self.scene.add_camera(new_camera)
+        self.update_cameras_list()
+        self.scene.select_camera(self.scene.get_camera_count() - 1)
+        self.on_camera_selected()
+        self.status_bar.showMessage(f"Камера '{new_camera.name}' добавлена", 2000)
+    
+    def remove_camera(self):
+        """Удаляет выбранную камеру"""
+        if not RENDERING_AVAILABLE:
+            return
+        
+        current_row = self.cameras_list.currentRow()
+        if current_row < 0:
+            return
+        
+        if self.scene.get_camera_count() <= 1:
+            self.show_error("Ошибка", "Нельзя удалить последнюю камеру")
+            return
+        
+        camera = self.scene.get_camera(current_row)
+        reply = QMessageBox.question(
+            self,
+            "Подтверждение",
+            f"Удалить камеру '{camera.name}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        
+        if reply == QMessageBox.Yes:
+            self.scene.remove_camera(current_row)
+            self.update_cameras_list()
+            self.on_camera_selected()
+            self.status_bar.showMessage("Камера удалена", 2000)
+    
+    def on_camera_selected(self):
+        """Обработчик выбора камеры"""
+        if not RENDERING_AVAILABLE:
+            return
+        
+        current_row = self.cameras_list.currentRow()
+        if current_row >= 0:
+            self.scene.select_camera(current_row)
+            camera = self.scene.get_selected_camera()
+            if camera:
+                self.model_viewer.set_camera(camera)
+                self.model_viewer.update_render()
+    
+    def update_cameras_list(self):
+        """Обновляет список камер"""
+        if not RENDERING_AVAILABLE:
+            return
+        
+        self.cameras_list.clear()
+        for i, camera in enumerate(self.scene.get_all_cameras()):
+            self.cameras_list.addItem(f"{i + 1}. {camera.name}")
+        
+        # Выделяем выбранную камеру
+        selected_idx = self.scene.get_selected_camera_index()
+        if 0 <= selected_idx < self.cameras_list.count():
+            self.cameras_list.setCurrentRow(selected_idx)
     
     def show_error(self, title, message):
         """Показывает диалог с ошибкой"""
